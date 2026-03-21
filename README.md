@@ -321,9 +321,10 @@ See [Anthropic's channels guide](https://code.claude.com/docs/en/channels#suppor
 
 ### Launch Claude Code
 
-From your SSH session inside the container:
+From your SSH session, use `screen` so Claude survives SSH disconnects:
 
 ```bash
+screen -S claude
 cd /app
 claude \
   --dangerously-skip-permissions \
@@ -331,7 +332,14 @@ claude \
   --channels plugin:telegram@claude-plugins-official
 ```
 
-Claude Code runs interactively in your SSH terminal with full access to Telegram, voice transcription, and webhook channels.
+Once Claude is running, detach with `Ctrl+A` then `D` — you can safely disconnect SSH and Claude keeps running.
+
+To reattach later:
+
+```bash
+ssh -p 2222 claude@localhost
+screen -r claude
+```
 
 ### Testing webhooks
 
