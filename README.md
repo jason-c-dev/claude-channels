@@ -36,30 +36,52 @@ This repo demonstrates both patterns:
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────┐
-│                 Claude Code Session              │
-│                                                  │
-│  CLAUDE.md defines behavior:                     │
-│  - How to respond on Telegram                    │
-│  - How to handle voice messages                  │
-│  - What to do for each webhook route             │
-│                                                  │
-├──────────┬──────────┬───────────┬────────────────┤
-│ Telegram │  voice-  │  webhook- │  Gmail/GCal    │
-│ Plugin   │  tools   │  channel  │  (claude.ai)   │
-│ (channel)│  (tool)  │ (channel) │  (connectors)  │
-└────┬─────┴────┬─────┴─────┬─────┴────────────────┘
-     │          │           │
-     ▼          ▼           ▼
-  Telegram   whisper.cpp   HTTP :8788
-  Bot API                  ◄── cron / curl / webhooks
+```mermaid
+graph TB
+    subgraph session["Claude Code Session"]
+        claude["CLAUDE.md\n─────────\nBehavior · Routing · Personality"]
+    end
+
+    subgraph channels["Channels (push events IN)"]
+        telegram["Telegram Plugin\n📱 channel"]
+        webhook["webhook-channel\n🔔 channel"]
+    end
+
+    subgraph tools["MCP Servers (Claude calls OUT)"]
+        voice["voice-tools\n🎤 tool"]
+        gmail["Gmail / GCal\n📧 connectors"]
+    end
+
+    subgraph external["External"]
+        tgapi["Telegram Bot API"]
+        whisper["whisper.cpp"]
+        http["HTTP :8788"]
+        cron["⏰ cron / curl / webhooks"]
+    end
+
+    telegram -- "push messages" --> session
+    webhook -- "push events" --> session
+    session -- "calls on demand" --> voice
+    session -- "calls on demand" --> gmail
+    telegram <--> tgapi
+    voice --> whisper
+    webhook <--> http
+    cron --> http
+
+    style session fill:#6e44ff,stroke:#5533cc,color:#fff
+    style channels fill:#ff6b6b,stroke:#cc5555,color:#fff
+    style tools fill:#4ecdc4,stroke:#3baa9e,color:#fff
+    style external fill:#f8f9fa,stroke:#dee2e6,color:#333
+    style claude fill:#5533cc,stroke:#4422aa,color:#fff
+    style telegram fill:#cc4444,stroke:#aa3333,color:#fff
+    style webhook fill:#cc4444,stroke:#aa3333,color:#fff
+    style voice fill:#3baa9e,stroke:#2d8a82,color:#fff
+    style gmail fill:#3baa9e,stroke:#2d8a82,color:#fff
 ```
 
-**Push vs Pull:**
-- Telegram plugin and webhook-channel are **channels** — they push messages/events into the session
-- voice-tools is a regular **MCP server** — Claude calls it when it needs to transcribe audio
-- Gmail/GCal are claude.ai connectors — Claude calls them for email and calendar data
+**Push vs Pull** — the key insight:
+- 🔴 **Channels** push events into the session (Telegram messages, cron triggers, webhooks)
+- 🟢 **MCP tools** are called by Claude on demand (transcription, email, calendar)
 
 ## Project structure
 
