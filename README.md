@@ -37,39 +37,38 @@ This repo demonstrates both patterns:
 ## Architecture
 
 ```mermaid
-graph TB
+graph LR
+    cron(("cron / curl")) --> http(("HTTP :8788"))
+    tgapi(("Telegram Bot API"))
+
+    http --> webhook
+    tgapi <--> telegram
+
     subgraph channels [" Channels — push events IN "]
-        telegram["Telegram Plugin<br/>channel"]
-        webhook["webhook-channel<br/>channel"]
+        telegram["Telegram Plugin"]
+        webhook["webhook-channel"]
     end
 
+    telegram ==> claude
+    webhook ==> claude
+
     subgraph session [" Claude Code Session "]
-        claude["CLAUDE.md<br/>Behavior | Routing | Personality"]
+        claude["CLAUDE.md"]
     end
+
+    claude -.-> voice
+    claude -.-> gmail
 
     subgraph tools [" MCP Servers — Claude calls OUT "]
         voice["voice-tools"]
         gmail["Gmail / GCal"]
     end
 
-    tgapi(("Telegram<br/>Bot API"))
-    whisper(("whisper.cpp"))
-    http(("HTTP :8788"))
-    cron(("cron / curl"))
-
-    telegram -- "push messages" --> claude
-    webhook -- "push events" --> claude
-    claude -. "calls on demand" .-> voice
-    claude -. "calls on demand" .-> gmail
-    telegram <--> tgapi
-    voice --> whisper
-    http --> webhook
-    cron --> http
+    voice --> whisper(("whisper.cpp"))
 ```
 
-**Push vs Pull** — the key insight:
-- 🔴 **Channels** push events into the session (Telegram messages, cron triggers, webhooks)
-- 🟢 **MCP tools** are called by Claude on demand (transcription, email, calendar)
+> **Solid arrows** = channels push events into the session
+> **Dotted arrows** = Claude calls tools on demand
 
 ## Project structure
 
