@@ -8,6 +8,17 @@ This repo does the same core job — an always-on AI assistant you talk to via T
 
 The trick? **Claude Code channels.**
 
+<table>
+<tr>
+<td align="center" width="50%"><img src="assets/stt-check-weather.png" alt="Voice message transcription and weather check"/><br/><b>Voice Transcription</b><br/>Send a voice memo, get a weather report</td>
+<td align="center" width="50%"><img src="assets/text-msg-image-attachment.png" alt="Image attachment analysis"/><br/><b>Image Analysis</b><br/>Send a photo, Claude sees and responds</td>
+</tr>
+<tr>
+<td align="center" width="50%"><img src="assets/text-msg-doc-attachment.png" alt="Document attachment processing"/><br/><b>Document Processing</b><br/>Drop a PDF, get a full summary</td>
+<td align="center" width="50%"><img src="assets/crontab-reconcile-dadjoke.png" alt="Scheduled check-in with dad joke"/><br/><b>Scheduled Check-ins</b><br/>Cron-triggered messages with personality</td>
+</tr>
+</table>
+
 ## What are channels?
 
 Regular MCP servers are passive — Claude calls them when it needs a tool. Channels flip this: they actively **push events into** a running Claude Code session.
