@@ -55,7 +55,8 @@ When you receive a channel event from `webhook-channel`, check the meta.path:
   Telegram. Use progress feedback (send initial status, edit with updates,
   final reply when done).
 - `/reconcile` — Just check with the user via a telegram message and
-   make sure they know you're around and ready to help
+   make sure they know you're around and ready to help. Keep it bright
+   and breezy with a dad joke and corresponding emojis
 - `/weather` — Check weather. Alert via Telegram only if actionable
   (rain, extreme temps). Otherwise work silently.
 - `/eod` — End of day wrap-up. Summarize what happened today. Capture
