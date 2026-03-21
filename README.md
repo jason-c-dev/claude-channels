@@ -38,13 +38,13 @@ This repo demonstrates both patterns:
 
 ```mermaid
 graph LR
-    cron(("cron / curl")) --> http(("HTTP :8788"))
-    tgapi(("Telegram Bot API"))
+    cron(["cron"]) --> http(["HTTP :8788"])
+    tgapi(["Telegram API"])
 
     http --> webhook
     tgapi <--> telegram
 
-    subgraph channels [" Channels — push events IN "]
+    subgraph channels [" Channels — push IN "]
         telegram["Telegram Plugin"]
         webhook["webhook-channel"]
     end
@@ -59,12 +59,12 @@ graph LR
     claude -.-> voice
     claude -.-> gmail
 
-    subgraph tools [" MCP Servers — Claude calls OUT "]
+    subgraph tools [" Tools — Claude calls OUT "]
         voice["voice-tools"]
         gmail["Gmail / GCal"]
     end
 
-    voice --> whisper(("whisper.cpp"))
+    voice --> whisper(["whisper.cpp"])
 ```
 
 > **Solid arrows** = channels push events into the session
