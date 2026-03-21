@@ -38,45 +38,33 @@ This repo demonstrates both patterns:
 
 ```mermaid
 graph TB
-    subgraph session["Claude Code Session"]
-        claude["CLAUDE.md\n─────────\nBehavior · Routing · Personality"]
+    subgraph channels [" Channels — push events IN "]
+        telegram["Telegram Plugin<br/>channel"]
+        webhook["webhook-channel<br/>channel"]
     end
 
-    subgraph channels["Channels (push events IN)"]
-        telegram["Telegram Plugin\n📱 channel"]
-        webhook["webhook-channel\n🔔 channel"]
+    subgraph session [" Claude Code Session "]
+        claude["CLAUDE.md<br/>Behavior | Routing | Personality"]
     end
 
-    subgraph tools["MCP Servers (Claude calls OUT)"]
-        voice["voice-tools\n🎤 tool"]
-        gmail["Gmail / GCal\n📧 connectors"]
+    subgraph tools [" MCP Servers — Claude calls OUT "]
+        voice["voice-tools"]
+        gmail["Gmail / GCal"]
     end
 
-    subgraph external["External"]
-        tgapi["Telegram Bot API"]
-        whisper["whisper.cpp"]
-        http["HTTP :8788"]
-        cron["⏰ cron / curl / webhooks"]
-    end
+    tgapi(("Telegram<br/>Bot API"))
+    whisper(("whisper.cpp"))
+    http(("HTTP :8788"))
+    cron(("cron / curl"))
 
-    telegram -- "push messages" --> session
-    webhook -- "push events" --> session
-    session -- "calls on demand" --> voice
-    session -- "calls on demand" --> gmail
+    telegram -- "push messages" --> claude
+    webhook -- "push events" --> claude
+    claude -. "calls on demand" .-> voice
+    claude -. "calls on demand" .-> gmail
     telegram <--> tgapi
     voice --> whisper
-    webhook <--> http
+    http --> webhook
     cron --> http
-
-    style session fill:#6e44ff,stroke:#5533cc,color:#fff
-    style channels fill:#ff6b6b,stroke:#cc5555,color:#fff
-    style tools fill:#4ecdc4,stroke:#3baa9e,color:#fff
-    style external fill:#f8f9fa,stroke:#dee2e6,color:#333
-    style claude fill:#5533cc,stroke:#4422aa,color:#fff
-    style telegram fill:#cc4444,stroke:#aa3333,color:#fff
-    style webhook fill:#cc4444,stroke:#aa3333,color:#fff
-    style voice fill:#3baa9e,stroke:#2d8a82,color:#fff
-    style gmail fill:#3baa9e,stroke:#2d8a82,color:#fff
 ```
 
 **Push vs Pull** — the key insight:
