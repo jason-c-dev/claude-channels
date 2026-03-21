@@ -1,0 +1,13 @@
+# Synapse v2 scheduled tasks — fires webhooks into localhost:8788
+
+# Daily briefing at 7:30am
+30 7 * * * curl -s -X POST http://127.0.0.1:8788/briefing -H 'Content-Type: application/json' -d '{"task":"daily_briefing"}'
+
+# Session reconciliation every 6 hours
+0 */6 * * * curl -s -X POST http://127.0.0.1:8788/reconcile -H 'Content-Type: application/json' -d '{"task":"reconcile"}'
+
+# Weather check at 7am and 5pm
+0 7,17 * * * curl -s -X POST http://127.0.0.1:8788/weather -H 'Content-Type: application/json' -d '{"task":"weather"}'
+
+# End-of-day vault wrap-up at 11pm
+0 23 * * * curl -s -X POST http://127.0.0.1:8788/eod -H 'Content-Type: application/json' -d '{"task":"end_of_day"}'
