@@ -155,7 +155,7 @@ Inside any Claude Code session:
 /plugin install telegram
 ```
 
-Follow the prompts to enter your bot token and configure access.
+Follow the prompts to enter your bot token and configure access as described in [Anthropic's guide](https://code.claude.com/docs/en/channels#supported-channels) (note when you get to the restart with channels step - see the following command)
 
 ### 5. Launch
 
@@ -270,6 +270,100 @@ That's it. No code changes — Claude reads the CLAUDE.md instructions and handl
 ```
 
 Compare with OpenClaw's 20,000+ commits across 79 directories. Channels are a powerful abstraction.
+
+## Docker
+
+Run the whole thing in a self-contained Docker container. You SSH in to authenticate and launch Claude Code interactively. Cron runs inside the container for scheduled tasks.
+
+### Build and start
+
+```bash
+docker compose build
+docker compose up -d
+```
+
+### First-run setup
+
+SSH into the container (password: `claude`):
+
+```bash
+ssh -p 2222 claude@localhost
+```
+
+Inside the container, authenticate and set up the Telegram plugin:
+
+```bash
+# 1. Navigate to the project
+cd /app
+
+# 2. Authenticate with your Claude Pro/Max account
+claude auth
+
+# 3. Start a Claude Code session
+claude
+
+# 4. Add the official plugin marketplace
+#    /plugin → Marketplaces → + Add Marketplace → anthropics/claude-plugins-official
+
+# 5. Install the Telegram plugin
+#    /plugin → Discover → telegram → install
+#    Paste your bot token from @BotFather when prompted
+
+# 6. Configure Telegram access
+/telegram:configure <your-bot-token>
+/telegram:access
+
+# 7. Exit the session
+exit
+```
+
+See [Anthropic's channels guide](https://code.claude.com/docs/en/channels#supported-channels) for full Telegram setup details.
+
+### Launch Claude Code
+
+From your SSH session inside the container:
+
+```bash
+cd /app
+claude \
+  --dangerously-skip-permissions \
+  --dangerously-load-development-channels server:webhook-channel \
+  --channels plugin:telegram@claude-plugins-official
+```
+
+Claude Code runs interactively in your SSH terminal with full access to Telegram, voice transcription, and webhook channels.
+
+### Testing webhooks
+
+From a second SSH session into the container:
+
+```bash
+ssh -p 2222 claude@localhost
+
+# Health check
+curl http://127.0.0.1:8788/health
+
+# Trigger a check-in (sends a Telegram message)
+curl -X POST http://127.0.0.1:8788/reconcile \
+  -H 'Content-Type: application/json' \
+  -d '{"task":"reconcile"}'
+```
+
+### What's in the container
+
+| Component | Details |
+|-----------|---------|
+| Base | Debian Bookworm (slim) |
+| Runtime | Bun + Node.js 22 |
+| AI | Claude Code v2.1.81 |
+| STT | whisper.cpp v1.7.3 + ggml-base.en model |
+| Audio | ffmpeg |
+| Ports | 2222 (SSH), 8788 (webhooks) |
+| Cron | Scheduled tasks pre-installed |
+
+### Persistence
+
+The `claude-data` volume mounts to `~/.claude/` inside the container, persisting auth, plugins, and Telegram credentials across container restarts.
 
 ## License
 

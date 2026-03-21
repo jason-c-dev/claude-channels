@@ -1,4 +1,4 @@
-# Synapse v2 scheduled tasks — fires webhooks into localhost:8788
+# claude-channels scheduled tasks — fires webhooks into localhost:8788
 
 # Daily briefing at 7:30am
 30 7 * * * curl -s -X POST http://127.0.0.1:8788/briefing -H 'Content-Type: application/json' -d '{"task":"daily_briefing"}'

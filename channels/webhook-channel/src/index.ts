@@ -35,7 +35,7 @@ await mcp.connect(transport);
 
 const httpServer = Bun.serve({
   port: PORT,
-  hostname: "127.0.0.1",
+  hostname: process.env.WEBHOOK_HOST ?? "127.0.0.1",
   async fetch(req) {
     const url = new URL(req.url);
 

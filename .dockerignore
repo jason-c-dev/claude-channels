@@ -1,0 +1,8 @@
+node_modules/
+.git/
+.claude/
+briefings/
+*.oga
+*.wav
+*.ogg
+.DS_Store

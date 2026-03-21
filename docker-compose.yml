@@ -1,0 +1,15 @@
+services:
+  claude:
+    build: .
+    ports:
+      - "8788:8788"
+      - "2222:22"
+    volumes:
+      - claude-data:/home/claude/.claude
+    environment:
+      - WEBHOOK_PORT=8788
+      - WEBHOOK_HOST=0.0.0.0
+    restart: unless-stopped
+
+volumes:
+  claude-data:
