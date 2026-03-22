@@ -22,7 +22,7 @@ FROM debian:bookworm-slim
 
 # System deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl ca-certificates ffmpeg openssh-server cron git unzip screen \
+    curl ca-certificates ffmpeg openssh-server cron git unzip screen tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy whisper from builder

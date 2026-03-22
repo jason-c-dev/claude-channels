@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e
 
+# Set timezone from TZ env var
+if [ -n "$TZ" ] && [ -f "/usr/share/zoneinfo/$TZ" ]; then
+  ln -sf "/usr/share/zoneinfo/$TZ" /etc/localtime
+  echo "$TZ" > /etc/timezone
+fi
+
 # Fix ownership of .claude dir (volume mount creates it as root)
 chown -R claude:claude /home/claude/.claude
 
