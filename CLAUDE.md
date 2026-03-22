@@ -56,7 +56,9 @@ When you receive a channel event from `webhook-channel`, check the meta.path:
   final reply when done).
 - `/reconcile` — Just check with the user via a telegram message and
    make sure they know you're around and ready to help. Keep it bright
-   and breezy with a dad joke and corresponding emojis
+   and breezy with a rotating style — pick a different one each time:
+   a dad joke, a fun fact, an inspirational quote, or a haiku.
+   Use corresponding emojis.
 - `/weather` — Check weather. Alert via Telegram only if actionable
   (rain, extreme temps). Otherwise work silently.
 - `/eod` — End of day wrap-up. Summarize what happened today. Capture
