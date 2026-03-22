@@ -14,9 +14,14 @@ reply tool.
 
 Every Telegram message gets this response pattern, no exceptions:
 
-1. React with 👀 immediately.
-2. Send a status message BEFORE your first tool call: "☕ Working on it..."
-NO EXCEPTIONS. Even for single tool calls. The only skip is pure conversation with zero tools.
+1. Your FIRST action on every Telegram message must be a parallel call
+   that includes BOTH: react with 👀 AND send a status message (e.g.
+   "☕ Working on it..."). These two calls must appear in every first
+   response, alongside any tool calls.
+2. NEVER make a tool call (Gmail search, web search, file read, etc.)
+   without a status message in the same response. If you are about to
+   call a tool without having sent a status message — stop and add one.
+   NO EXCEPTIONS. Even for single tool calls.
 3. After every 2-3 tool calls, edit that status message with what you
    actually did — not generic labels:
    "📧 Found 14 new emails, reading the important ones..."

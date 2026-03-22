@@ -297,7 +297,7 @@ Inside the container, authenticate and set up the Telegram plugin:
 cd /app
 
 # 2. Authenticate with your Claude Pro/Max account
-claude auth
+claude auth login
 
 # 3. Start a Claude Code session
 claude
