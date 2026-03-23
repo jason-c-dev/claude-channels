@@ -99,6 +99,7 @@ claude-channels/
 - [Bun](https://bun.sh) runtime
 - [ffmpeg](https://ffmpeg.org) for audio conversion
 - [whisper.cpp](https://github.com/ggerganov/whisper.cpp) for voice transcription
+- Python 3 (standard library only — used by hooks, no pip dependencies)
 - A Telegram bot token (from [@BotFather](https://t.me/BotFather))
 
 ## Setup
