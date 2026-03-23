@@ -33,6 +33,7 @@ This repo demonstrates both patterns:
 | `webhook-channel` | Channel server | 93 | HTTP listener that pushes webhooks into the session. Enables cron and external triggers. |
 | `CLAUDE.md` | Behavior layer | 67 | Instructions that give Claude its personality, Telegram etiquette, and task routing. |
 | `config/crontab` | Scheduler | 13 | Cron jobs that curl the webhook channel to trigger scheduled tasks. |
+| `hooks/telegram_gate.py` | Claude Code hook | 90 | Deterministic enforcement: gates Telegram acknowledgment before tool use. |
 
 ## Architecture
 
@@ -76,6 +77,8 @@ graph LR
 claude-channels/
 ├── CLAUDE.md                        # Agent behavior instructions
 ├── .mcp.json                        # MCP server configuration
+├── hooks/
+│   └── telegram_gate.py             # Deterministic behavioral enforcement
 ├── tools/
 │   └── voice-tools/
 │       ├── package.json
@@ -227,6 +230,32 @@ The `CLAUDE.md` file is the behavior layer. It's loaded into every Claude Code s
 - **Webhook routing**: What to do for each webhook path (`/briefing`, `/reconcile`, `/weather`, `/eod`)
 
 This is where you customize the assistant's personality and capabilities. Want Claude to handle a new webhook route? Add a bullet point. Want different Telegram behavior? Edit the instructions. No code changes needed.
+
+## Hooks: deterministic behavioral enforcement
+
+CLAUDE.md instructions are probabilistic — Claude follows them most of the time, but not always. For behaviors that must be guaranteed, this project uses Claude Code hooks: executable scripts that fire on lifecycle events and can block or modify tool calls.
+
+### The Telegram gate
+
+`hooks/telegram_gate.py` implements a binary gate that prevents Claude from making any non-Telegram tool calls until it has acknowledged the incoming message with a react and status message.
+
+How it works:
+1. **UserPromptSubmit hook** — when a Telegram message arrives, writes a state file marking the gate as "closed"
+2. **PreToolUse hook** — before every tool call, checks the gate. If it's closed and the tool isn't a Telegram communication tool (react/reply/edit_message), the tool call is blocked with an error explaining what to do first
+
+This means Claude *cannot* call Gmail, web search, or any other tool before acknowledging the message — no matter which model is running (including Haiku).
+
+### Setup
+
+The hook wiring is in `.claude/settings.json` (committed). It references the script via `$CLAUDE_PROJECT_DIR` so it works on any machine without path changes.
+
+The hook requires Python 3 (standard library only — no dependencies to install).
+
+### Why hooks instead of prompts
+
+CLAUDE.md instructions can be ignored under the right (or wrong) conditions. A hook is code: it either passes or it doesn't. For behaviors where "90% compliance" isn't enough — user-visible acknowledgment being the main one — hooks provide the guarantee that prompts cannot.
+
+The tradeoff: hooks enforce *that* something happens; prompts guide *how* it happens. This project uses both: the hook enforces the initial acknowledgment, CLAUDE.md guides the quality and content of status messages.
 
 ## Extending
 

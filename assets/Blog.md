@@ -167,6 +167,94 @@ This is what I've been calling the AI trust paradox in my other writing: the out
 
 ---
 
+## Update: When prompt engineering hits its ceiling, use code
+
+Two days after publishing this post, I was studying for the Claude Certified Architect -- Foundations exam when a concept from the study guide stopped me mid-sentence:
+
+> "The distinction between using hooks for deterministic guarantees versus relying on prompt instructions for probabilistic compliance."
+
+That's Task Statement 1.5 in the exam guide: "Apply Agent SDK hooks for tool call interception and data normalization." And Task Statement 1.4 goes further:
+
+> "When deterministic compliance is required (e.g., identity verification before financial operations), prompt instructions alone have a non-zero failure rate."
+
+I'd been living this exact problem for 48 hours.
+
+### The prompt engineering spiral
+
+Remember the progress feedback pattern I was so proud of? The one where CLAUDE.md says to react with eyes and send a status message before doing any work? In practice, Claude followed it about 90% of the time. So I tightened the language. Added "NO EXCEPTIONS." Added "NEVER make a tool call without a status message." Added bold, caps, and numbered rules.
+
+It went from 90% to maybe 95%. Still not 100%. And I was planning to switch to Haiku (a cheaper, faster model) which would likely make compliance worse, not better.
+
+Sending emoji reactions and progress updates isn't mission-critical in any traditional sense. But from the user's perspective, staring at a silent Telegram chat wondering if your message was received *feels* broken. Visual confirmation that Claude is working on your request is the difference between "this is useful" and "this is unreliable." So I treated it as mission-critical.
+
+Here's the thing the certification guide crystallized for me: I was treating a deterministic problem with a non-deterministic tool. No matter how precisely I worded my CLAUDE.md instructions, they remained *suggestions* processed by a language model. The model would weigh them against context, token probabilities, and its own judgment about what "no exceptions" really means. Sometimes it decided the instruction didn't apply. The outcome was usually fine. The process was never guaranteed.
+
+This is what the exam guide calls the difference between "programmatic enforcement" and "prompt-based guidance." Prompts are probabilistic. Code is deterministic. Knowing which to use when is, apparently, a core competency for building production systems with Claude.
+
+### The solution: a 90-line Python hook
+
+Claude Code has a hook system. Hooks are scripts that fire on lifecycle events -- before a tool runs (`PreToolUse`), when a user submits a prompt (`UserPromptSubmit`), when the agent stops, and more. They receive JSON on stdin describing what's about to happen, and they can allow it, block it, or modify it.
+
+The architecture is simple. Two hooks, one state file:
+
+1. **UserPromptSubmit hook**: When a Telegram message arrives, write a file that says "gate: closed"
+2. **PreToolUse hook**: Before every tool call, check the gate. If Claude is trying to call Gmail, WebSearch, or anything that isn't a Telegram communication tool -- and the gate is closed -- block it with exit code 2 and an error message explaining what to do instead
+
+That's it. Claude physically *cannot* search my email, read a file, or hit a web API until it has first called `react` or `reply` on Telegram. The hook doesn't care about prompt wording, model capability, or how the LLM interprets "no exceptions." It's a Python `if` statement. It either passes or it doesn't.
+
+```python
+# Telegram communication tools open the gate
+if tool_name in TELEGRAM_COMM_TOOLS:
+    write_state({"gate": "open", ...})
+    sys.exit(0)
+
+# Gate open -- allow everything
+if gate == "open":
+    sys.exit(0)
+
+# Gate closed -- block with actionable error
+print("BLOCKED: Send a Telegram react and status message first.", file=sys.stderr)
+sys.exit(2)
+```
+
+When Claude gets blocked, it receives the error message as context. Even Haiku can follow "you were blocked, call these two tools first, then retry." The hook enforces the *what*; the model handles the *how*.
+
+### The unexpected design insight
+
+Here's what surprised me. Once the hook existed, the CLAUDE.md instructions got *simpler*, not more complex. I deleted the shouty all-caps rules, the "NO EXCEPTIONS" warnings, the detailed parallel-batch instructions. The new version:
+
+```markdown
+### Progress Feedback
+
+A hook blocks all non-Telegram tools until you acknowledge the message.
+When you receive a Telegram message:
+
+1. React with eyes and send a brief status message. The hook will
+   not let you proceed until you do this.
+2. As you work, edit your status message every 2-3 tool calls with
+   specific progress.
+3. When complete, send a NEW reply with the final result.
+```
+
+Six lines instead of twelve. No shouting. The mechanical enforcement moved to code; the prompt now focuses on *quality* guidance that benefits from the model's judgment -- what to say in status messages, how often to update, why final replies should be new messages instead of edits.
+
+This maps directly to what the certification guide describes in Task Statement 1.4: use deterministic systems for workflow ordering (hooks, prerequisite gates), and reserve prompt-based guidance for decisions that benefit from model reasoning. Clean separation of concerns.
+
+### The certification connection
+
+Studying for the exam didn't just give me vocabulary. It reframed how I thought about the problem. I'd been stuck in a prompt engineering loop -- if the model isn't following instructions, write better instructions. The exam guide's domain structure pushed me to think in systems terms:
+
+- **Domain 1** (Agentic Architecture) taught me that hooks are a first-class enforcement mechanism, not a niche feature. The guide explicitly tests whether candidates know when to choose hooks over prompts for compliance.
+- **Domain 3** (Claude Code Configuration) covers the hook system's lifecycle events, matchers, and output formats -- the exact primitives I needed to build the gate.
+- **Domain 4** (Prompt Engineering) was where I started, but the guide itself distinguishes between prompts for quality guidance and code for guaranteed compliance. The answer to "my prompt isn't working reliably" isn't always "write a better prompt."
+- **Domain 5** (Context Management & Reliability) covers escalation and reliability decisions. The hook's circuit breaker (force the gate open after 3 consecutive blocks to prevent infinite loops) is exactly the kind of reliability pattern this domain tests.
+
+The irony is that I was building a weekend project, not a production system. But the architectural thinking transfers. If you're building a customer support agent that must verify identity before processing refunds, the certification guide's answer is the same one I discovered empirically: don't put "ALWAYS verify identity first" in the system prompt and hope for the best. Put a `PreToolUse` hook on `process_refund` that blocks until `get_customer` has returned a verified ID.
+
+Prompts are for guidance. Hooks are for guarantees. The exam guide taught me the principle. The Telegram gate taught me the practice.
+
+---
+
 ## A word on the "dangerously" flags
 
 Let's talk about the two flags with "dangerously" in their name, because Anthropic chose that word deliberately.
